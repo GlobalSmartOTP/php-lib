@@ -1,0 +1,30 @@
+{
+    "name": "globalsmartotp/php-lib",
+    "description": "This SDK allows you to connect to gsOTP.com server from your php application.",
+    "type": "library",
+    "keywords": [
+        "otp",
+        "sms",
+        "ivr"
+    ],
+    "license": "MIT",
+    "homepage": "https://gsotp.com",
+    "authors": [
+        {
+            "name": "Ehsan Sabet",
+            "email": "ehsan.sabet@hotmail.com"
+        }
+    ],
+    "require": {
+        "php" : ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "GlobalSmartOTP\\Api\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require-dev": {
+        "phpunit/phpunit": "9.5.x-dev"
+    }
+}
