@@ -1,4 +1,4 @@
-![gsOTP](examples/assets/logo.png) 
+![gsOTP](examples/assets/logo.png)
 
 # GlobalSmartOTP PHP SDK
 
@@ -7,7 +7,8 @@ A PHP SDK for the GlobalSmartOTP API.
 ## Requirements
 
 - PHP 7.4 or higher
-- cURL
+- ext-curl
+- ext-json
 
 ## Installation
 
@@ -17,44 +18,78 @@ $ cd php-lib/
 $ composer dumpautoload
 ```
 
-## Send SMS OTP
+### Require
 ```php
 require dirname(__FILE__) . '/../vendor/autoload.php';
 use GlobalSmartOTP\Api\OTPHandler;
+
 // Get apiKey from https://gsotp.com/dashboard/document/
 $apiKey = "";
 $mobile = "";
 $templateID = 3;
-$gsOtp = new OTPHandler($apiKey);
-// Send SMS OTP
-$referenceID = $gsOtp->sendSMS($mobile, $templateID);
-if (!$referenceID) {
-    echo "Error code: " . $gsOtp->getErrorCode() . PHP_EOL;
-    echo "Error message" . $gsOtp->getErrorMessage() . PHP_EOL;
-} else {
-    echo "ReferenceID: {$referenceID}";
-}
 ```
 
-## Verify OTP
+## Send OTP 
+
+### By SMS
 ```php
-require dirname(__FILE__) . '/../vendor/autoload.php';
-use GlobalSmartOtp\Api\OTPHandler;
-// Get apiKey from https://gsotp.com/dashboard/document/
-$apiKey = "";
-$mobile = "";
-$otp = 0;
-$gsOtp = new OTPHandler($apiKey);
-// Verify OTP
-$verified = $gsOtp->verify($mobile, $otp);
-if (!$verified) {
-    echo "Error code: " . $gsOtp->getErrorCode() . PHP_EOL;
-    echo "Error message" . $gsOtp->getErrorMessage() . PHP_EOL;
-} else {
-    echo "Verified OTP!";
+try {
+	$referenceID = OTPHandler::BySms($apiKey, $mobile, $templateID);
+	echo "ReferenceID: {$referenceID}";
+} catch (\Exception $e) {
+	echo $e->getMessage();
 }
 ```
-
+### By  Messenger
+```php
+try {
+	$referenceID = OTPHandler::ByMessenger($apiKey, $mobile, $templateID);
+	echo "ReferenceID: {$referenceID}";
+} catch (\Exception $e) {
+	echo $e->getMessage();
+}
+```
+### By  IVR
+```php
+$templateID = 2;
+try {
+	$referenceID = OTPHandler::ByIvr($apiKey, $mobile, $templateID);
+	echo "ReferenceID: {$referenceID}";
+} catch (\Exception $e) {
+	echo $e->getMessage();
+}
+```
+### By  Smart
+```php
+try {
+	$referenceID = OTPHandler::BySmart($apiKey, $mobile, $templateID);
+	echo "ReferenceID: {$referenceID}";
+} catch (\Exception $e) {
+	echo $e->getMessage();
+}
+```
+---
+## Verify
+```php
+try {
+	OTPHandler::isVerify($apiKey, $mobile, $otp);
+	echo "OTP is verified";
+} catch (\Exception $e) {
+	echo $e->getMessage();
+}
+```
+---
+## Status
+```php
+try {
+	$gsOTP = OTPHandler::checkStatus($apiKey, $referenceID);
+	echo "OTPStatus: " . $gsOTP->OTPStatus . PHP_EOL;
+	echo "OTPVerified:" . $gsOTP->OTPVerified . PHP_EOL;
+	echo "OTPMethod: " . $gsOTP->OTPMethod . PHP_EOL;
+} catch (\Exception $e) {
+	echo "Error:" . $e->getMessage();
+}
+```
 ## License
 
 MIT

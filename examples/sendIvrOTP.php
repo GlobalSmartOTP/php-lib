@@ -1,20 +1,35 @@
 <?php
 require dirname(__FILE__) . '/../vendor/autoload.php';
+require_once dirname(__FILE__) . '/configs.php';
 
 use GlobalSmartOTP\Api\OTPHandler;
 
-// Get apiKey from https://gsotp.com/dashboard/document/
-$apiKey = "";
-$mobile = "";
-$templateID = 3;
-
-$gsOtp = new OTPHandler($apiKey);
-
-// Send IVR OTP
-$referenceID = $gsOtp->sendIVR($mobile, $templateID);
-if (!$referenceID) {
-    echo "Error code: " . $gsOtp->getErrorCode() . PHP_EOL;
-    echo "Error message" . $gsOtp->getErrorMessage() . PHP_EOL;
-} else {
-    echo "ReferenceID: {$referenceID}";
+/* Send OTP by IVR, Call static */
+try {
+	$gsOTP = OTPHandler::ByIVR(API_KEY, MOBILE, IVR_TEMPLATE_ID);
+	echo "ReferenceID: {$gsOTP}";
+} catch (\Exception $e) {
+	echo $e->getMessage();
 }
+
+/* Send OTP by IVR */
+/*
+$gsOtp = new OTPHandler(API_KEY);
+try {
+	$gsOTP = $gsOtp->sendIvr(MOBILE, TEMPLATE_ID);
+	echo "ReferenceID: " . $gsOTP;
+} catch (Exception $e) {
+	echo "Error: " . $e->getMessage();
+}
+*/
+
+/* Send OTP by IVR */
+/*
+$gsOtp = new OTPHandler(API_KEY);
+try {
+	$gsOTP = $gsOtp->setMobile(MOBILE)->sendIvr();
+	echo "ReferenceID: " . $gsOTP;
+} catch (Exception $e) {
+	echo "Error: " . $e->getMessage();
+}
+*/

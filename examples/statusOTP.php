@@ -1,21 +1,41 @@
 <?php
 require dirname(__FILE__) . '/../vendor/autoload.php';
+require_once dirname(__FILE__) . '/configs.php';
 
 use GlobalSmartOTP\Api\OTPHandler;
 
-// Get apiKey from https://gsotp.com/dashboard/document/
-$apiKey = "";
-$referenceID = ""; // Get referenceID from gsOtp->send()
-
-$gsOtp = new OTPHandler($apiKey);
-
-// Check OTP status
-$status = $gsOtp->status($referenceID);
-if (!$status) {
-    echo "Error code: " . $gsOtp->getErrorCode() . PHP_EOL;
-    echo "Error message" . $gsOtp->getErrorMessage() . PHP_EOL;
-} else {
-    foreach ($status as $key => $value) {
-        echo "{$key}: {$value}" . PHP_EOL;
-    }
+/* Check Status OTP Call static */
+try {
+	$gsOTP = OTPHandler::checkStatus(API_KEY, REFERENCE_ID);
+	echo "OTPStatus: " . $gsOTP->getOTPStatus() . PHP_EOL;
+	echo "OTPVerified:" . $gsOTP->isOTPVerified() . PHP_EOL;
+	echo "OTPMethod: " . $gsOTP->getOTPMethod() . PHP_EOL;
+} catch (\Exception $e) {
+	echo "Error:" . $e->getMessage();
 }
+
+/* Verify OTP */
+/*
+$gsOtp = new OTPHandler(API_KEY);
+try {
+	$gsOTP = $gsOtp->status(REFERENCE_ID);
+	echo "OTPStatus: " . $gsOTP->getOTPStatus() . PHP_EOL;
+	echo "OTPVerified:" . $gsOTP->isOTPVerified() . PHP_EOL;
+	echo "OTPMethod: " . $gsOTP->getOTPMethod() . PHP_EOL;
+} catch (Exception $e) {
+	echo "Error: " . $e->getMessage();
+}
+*/
+
+/* Verify OTP */
+/*
+$gsOtp = new OTPHandler(API_KEY);
+try {
+	$gsOTP = $gsOtp->setOTPReferenceID(REFERENCE_ID)->status();
+	echo "OTPStatus: " . $gsOTP->getOTPStatus() . PHP_EOL;
+	echo "OTPVerified:" . $gsOTP->isOTPVerified() . PHP_EOL;
+	echo "OTPMethod: " . $gsOTP->getOTPMethod() . PHP_EOL;
+} catch (Exception $e) {
+	echo "Error: " . $e->getMessage();
+}
+*/
