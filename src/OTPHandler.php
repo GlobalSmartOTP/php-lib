@@ -2,220 +2,642 @@
 
 namespace GlobalSmartOTP\Api;
 
+use Exception;
+
 class OTPHandler
 {
-	const VERSION = '1.0.0';
+
+	const VERSION = '2.0.0';
 	const BASEURL = 'https://api.gsotp.com';
+	const ACCEPT_LANGUAGE = 'fa';
+	const ENDPOINT_SEND = "/otp/send";
+	const ENDPOINT_STATUS = "/otp/status";
+	const ENDPOINT_VERIFY = "/otp/verify";
 
-	protected $apiKey;
-	protected $acceptLanguage = "fa";
+	/**
+	 * @var string
+	 */
+	private string $apiKey;
+	/**
+	 * @var string
+	 */
+	private string $endpoint;
+	/**
+	 * @var int
+	 */
+	private int $httpCode;
+	/**
+	 * @var string
+	 */
+	private string $acceptLanguage = self::ACCEPT_LANGUAGE;
+	/**
+	 * @var string
+	 */
+	public string $params;
+	/**
+	 * @var object
+	 */
+	public object $response;
+	/**
+	 * @var Exception
+	 */
+	public Exception $error;
+	/**
+	 * @var OTPHandler
+	 */
+	protected static OTPHandler $instance;
 
-	protected $errorCode;
-	protected $errorMessage;
+	/**
+	 * @var int
+	 */
+	public int $templateID;
+	/**
+	 * @var string
+	 */
+	public string $method;
+	/**
+	 * @var string
+	 */
+	public string $mobile;
+	/**
+	 * @var int
+	 */
+	public int $countryCode;
+	/**
+	 * @var int
+	 */
+	public int $length;
+	/**
+	 * @var string
+	 */
+	public string $code;
+	/**
+	 * @var string
+	 */
+	public string $param1;
+	/**
+	 * @var string
+	 */
+	public string $param2;
+	/**
+	 * @var string
+	 */
+	public string $param3;
+	/**
+	 * @var string
+	 */
+	public string $param4;
+	/**
+	 * @var string
+	 */
+	public string $param5;
+	/**
+	 * @var int
+	 */
+	public int $expireTime;
 
+	/**
+	 * @var string
+	 */
+	public string $OTPReferenceID;
+	/**
+	 * @var string
+	 */
+	private string $OTPStatus;
+	/**
+	 * @var bool
+	 */
+	private bool $OTPVerified;
+	/**
+	 * @var string
+	 */
+	private string $OTPMethod;
+	/**
+	 * @var string
+	 */
+	public string $OTP;
+
+	/**
+	 * @param string $apiKey
+	 */
 	public function __construct(string $apiKey)
 	{
-		$this->apiKey = $apiKey;
+		$this->setApiKey($apiKey);
 	}
 
 	/**
-	 * Send SMS otp
-	 * @param string $mobile
-	 * @param string $method
-	 * @param int $templateID
-	 * @param array $options
-	 * @return int
+	 * @param string $apiKey
+	 * @return OTPHandler
 	 */
-	public function sendSMS(string $mobile, int $templateID = 3, array $options = [])
+	public static function getInstance(string $apiKey): OTPHandler
 	{
-		return $this->send($mobile, "sms", $templateID, $options);
-	}
-
-	/**
-	 * Send IVR otp
-	 * @param string $mobile
-	 * @param string $method
-	 * @param int $templateID
-	 * @param array $options
-	 * @return int
-	 */
-	public function sendIVR(string $mobile, int $templateID = 3, array $options = [])
-	{
-		return $this->send($mobile, "ivr", $templateID, $options);
-	}
-
-	/**
-	 * Send Email otp
-	 * @param string $mobile
-	 * @param string $method
-	 * @param int $templateID
-	 * @param array $options
-	 * @return int
-	 */
-	public function sendEmail(string $mobile, int $templateID = 3, array $options = [])
-	{
-		return $this->send($mobile, "email", $templateID, $options);
-	}
-
-	/**
-	 * Send Gap otp
-	 * @param string $mobile
-	 * @param string $method
-	 * @param int $templateID
-	 * @param array $options
-	 * @return int
-	 */
-	public function sendGap(string $mobile, int $templateID = 3, array $options = [])
-	{
-		return $this->send($mobile, "gap", $templateID, $options);
-	}
-
-	protected function send(string $mobile, string $method = "sms", int $templateID = 3, array $options = []): int
-	{
-		$params = $options + [
-			'mobile' => $mobile,
-			'method' => $method,
-			'templateID' => $templateID,
-		];
-
-		if (!empty($params['countryCode']) && $params['countryCode'] < 0) {
-			$this->setError("countryCode is invalid");
-			return 0;
+		if (!isset(static::$instance)) {
+			static::$instance = new static($apiKey);
 		}
-		if (!empty($params['length']) && ($params['length'] < 4 || $params['length'] > 10)) {
-			$this->setError("length is invalid. between 4-10");
-			return 0;
-		}
-		if (!empty($params['expireTime']) && ($params['expireTime'] < 60 || $params['expireTime'] > 86400)) {
-			$this->setError("expireTime is invalid. between 60-86400");
-			return 0;
+		return static::$instance;
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public static function __callStatic($method, $arguments)
+	{
+		$apiKey = $arguments[0] ?? '';
+		$instance = static::getInstance($apiKey);
+		$callMethod = strtolower($method);
+		switch (true) {
+			case substr($callMethod, 0, 2) == 'by':
+			{
+				$callMethod = "send" . ucfirst(substr($callMethod, 2));
+				$instance->setMobile($arguments[1] ?? '')
+					->setTemplateID($arguments[2] ?? 3);
+				break;
+			}
+			case $callMethod == strtolower("checkStatus"):
+			{
+				$instance->setOTPReferenceID($arguments[1] ?? '');
+				$callMethod = "status";
+				break;
+			}
+			case $callMethod == strtolower("isVerify"):
+			{
+				$instance->setMobile($arguments[1] ?? '')
+					->setOTP($arguments[2]);
+				$callMethod = "verify";
+			}
 		}
 
+		if (method_exists(get_class(), $callMethod)) {
+			return $instance->{$callMethod}();
+		}
+		$instance->setError("method `$method` not found!", 500);
+		throw $instance->error;
+	}
+
+	/**
+	 * @param string $mobile
+	 * @param int $templateID
+	 * @return string
+	 * @throws Exception
+	 */
+	public function sendSms(string $mobile = '', int $templateID = 0): string
+	{
+		if (!empty($mobile)) {
+			$this->setMobile($mobile);
+		}
+		if (!empty($templateID)) {
+			$this->setTemplateID($templateID);
+		}
+		return $this->setMethod('sms')->send();
+	}
+
+	/**
+	 * @param string $mobile
+	 * @param int $templateID
+	 * @return string
+	 * @throws Exception
+	 */
+	public function sendMessenger(string $mobile = '', int $templateID = 0): string
+	{
+		if (!empty($mobile)) {
+			$this->setMobile($mobile);
+		}
+		if (!empty($templateID)) {
+			$this->setTemplateID($templateID);
+		}
+		return $this->setMethod('messenger')->send();
+	}
+
+	/**
+	 * @param string $mobile
+	 * @param int $templateID
+	 * @return string
+	 * @throws Exception
+	 */
+	public function sendIvr(string $mobile = '', int $templateID = 2): string
+	{
+		if (!empty($mobile)) {
+			$this->setMobile($mobile);
+		}
+		if (!empty($templateID)) {
+			$this->setTemplateID($templateID);
+		}
+		return $this->setMethod('ivr')->send();
+	}
+
+	/**
+	 * @param string $mobile
+	 * @param int $templateID
+	 * @return string
+	 * @throws Exception
+	 */
+	public function sendSmart(string $mobile = '', int $templateID = 0): string
+	{
+		if (!empty($mobile)) {
+			$this->setMobile($mobile);
+		}
+		if (!empty($templateID)) {
+			$this->setTemplateID($templateID);
+		}
+		return $this->setMethod('smart')->send();
+	}
+
+	/**
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function send(): string
+	{
+		if (empty($this->mobile)) {
+			$this->setError("mobile is empty", 400);
+		}
+		if (empty($this->apiKey)) {
+			$this->setError("apiKey is empty", 400);
+		}
 		try {
-			$response = $this->sendRequest("/otp/send", $params);
-		} catch (\Exception $e) {
-			$this->setError($e->getMessage(), $e->getCode());
-			return 0;
+			$this->setEndpoint(self::ENDPOINT_SEND)->setParams()->sendRequest();
+		} catch (Exception $e) {
+			throw $this->error;
 		}
-		return $response['referenceID'];
+		return $this->response->referenceID ?? '';
 	}
 
 	/**
-	 * Status OTP
-	 * @param int $referenceID
-	 * @return int
+	 * @throws Exception
 	 */
-	public function status(int $referenceID): array
+	public function status(string $referenceID = ''): OTPHandler
 	{
-		$params = [
-			'OTPReferenceID' => $referenceID,
-		];
+		if (!empty($referenceID)) {
+			$this->setOTPReferenceID($referenceID);
+		}
 		try {
-			$response = $this->sendRequest("/otp/status", $params);
-		} catch (\Exception $e) {
-			$this->setError($e->getMessage(), $e->getCode());
-			return [];
+			$this->setEndpoint(self::ENDPOINT_STATUS)
+				->setParams()
+				->sendRequest();
+		} catch (Exception $e) {
+			throw $this->error;
 		}
-		$result = [
-			'status' => (string) $response['OTPStatus'],
-			'method' => (string) $response['OTPMethod'],
-			'verified' => (bool) $response['OTPVerified'],
-		];
-		return $result;
+		$this->OTPStatus = $this->response->OTPStatus;
+		$this->OTPVerified = $this->response->OTPVerified;
+		$this->OTPMethod = $this->response->OTPMethod;
+		return $this;
 	}
 
 	/**
-	 * Verify OTP
-	 * @param string $mobile
-	 * @param string $otp
-	 * @param array $options
-	 * @return bool
+	 * @throws Exception
 	 */
-	public function verify(string $mobile, string $otp): bool
+	public function verify(string $mobile = '', string $OTP = ''): string
 	{
-		$params = [
-			'mobile' => $mobile,
-			'otp' => $otp,
-		];
+		if (!empty($mobile)) {
+			$this->setMobile($mobile);
+		}
+		if (!empty($OTP)) {
+			$this->setOTP($OTP);
+		}
 		try {
-			$response = $this->sendRequest("/otp/verify", $params);
-		} catch (\Exception $e) {
-			$this->setError($e->getMessage(), $e->getCode());
-			return false;
+			$this->setEndpoint(self::ENDPOINT_VERIFY)
+				->setParams()
+				->sendRequest();
+		} catch (Exception $e) {
+			throw $this->error;
 		}
-		$result = $response['status'] == 'success' ? true : false;
-		return $result;
+		if ($this->response->status != 'success') {
+			$this->setError($this->response->error->message, $this->response->error->code);
+			throw $this->error;
+		}
+		return ($this->OTPVerified = ($this->response->status === 'success'));
 	}
 
 	/**
-	 * Set accept language
-	 * @param string $language
-	 * @return void
-	 */
-	public function setAcceptLanguage(string $language)
-	{
-		$this->acceptLanguage = $language;
-	}
-
-	/**
-	 * Get error message
 	 * @return string
 	 */
-	public function getErrorMessage(): string
+	public function getOTPStatus(): string
 	{
-		return $this->errorMessage ?? "";
+		return $this->OTPStatus;
 	}
 
 	/**
-	 * Get error code
-	 * @return int
+	 * @return bool
 	 */
-	public function getErrorCode(): int
+	public function isOTPVerified(): bool
 	{
-		return $this->errorCode ?? 0;
+		return $this->OTPVerified;
 	}
 
-	protected function setError(string $message = '', int $code = 0)
+	/**
+	 * @return string
+	 */
+	public function getOTPMethod(): string
 	{
-		$this->errorCode = $code;
-		$this->errorMessage = $message;
+		return $this->OTPMethod;
 	}
 
-	protected function sendRequest(string $endpoint, array $params): array
+	/**
+	 * @param string $OTPReferenceID
+	 * @return OTPHandler
+	 */
+	public function setOTPReferenceID(string $OTPReferenceID): OTPHandler
 	{
-		if (is_array($params)) {
-			$params = json_encode($params);
+		$this->OTPReferenceID = $OTPReferenceID;
+		return $this;
+	}
+
+	/**
+	 * @param string $OTP
+	 * @return OTPHandler
+	 */
+	public function setOTP(string $OTP): OTPHandler
+	{
+		$this->OTP = $OTP;
+		return $this;
+	}
+
+	/**
+	 * @param int $templateID
+	 * @return OTPHandler
+	 */
+	public function setTemplateID(int $templateID): OTPHandler
+	{
+		$this->templateID = $templateID;
+		return $this;
+	}
+
+	/**
+	 * @param string $method
+	 * @return OTPHandler
+	 */
+	public function setMethod(string $method): OTPHandler
+	{
+		$this->method = $method;
+		return $this;
+	}
+
+	/**
+	 * @param string $mobile
+	 * @return OTPHandler
+	 */
+	public function setMobile(string $mobile): OTPHandler
+	{
+		$this->mobile = $mobile;
+		return $this;
+	}
+
+	/**
+	 * @param int $countryCode
+	 * @return OTPHandler
+	 */
+	public function setCountryCode(int $countryCode): OTPHandler
+	{
+		$this->countryCode = $countryCode;
+		return $this;
+	}
+
+	/**
+	 * @param int $length
+	 * @return OTPHandler
+	 */
+	public function setLength(int $length): OTPHandler
+	{
+		$this->length = $length;
+		return $this;
+	}
+
+	/**
+	 * @param string $code
+	 * @return OTPHandler
+	 */
+	public function setCode(string $code): OTPHandler
+	{
+		$this->code = $code;
+		return $this;
+	}
+
+	/**
+	 * @param string $param1
+	 * @return OTPHandler
+	 */
+	public function setParam1(string $param1): OTPHandler
+	{
+		$this->param1 = $param1;
+		return $this;
+	}
+
+	/**
+	 * @param string $param2
+	 * @return OTPHandler
+	 */
+	public function setParam2(string $param2): OTPHandler
+	{
+		$this->param2 = $param2;
+		return $this;
+	}
+
+	/**
+	 * @param string $param3
+	 * @return OTPHandler
+	 */
+	public function setParam3(string $param3): OTPHandler
+	{
+		$this->param3 = $param3;
+		return $this;
+	}
+
+	/**
+	 * @param string $param4
+	 * @return OTPHandler
+	 */
+	public function setParam4(string $param4): OTPHandler
+	{
+		$this->param4 = $param4;
+		return $this;
+	}
+
+	/**
+	 * @param string $param5
+	 * @return OTPHandler
+	 */
+	public function setParam5(string $param5): OTPHandler
+	{
+		$this->param5 = $param5;
+		return $this;
+	}
+
+	/**
+	 * @param int $expireTime
+	 * @return OTPHandler
+	 */
+	public function setExpireTime(int $expireTime): OTPHandler
+	{
+		$this->expireTime = $expireTime;
+		return $this;
+	}
+
+	/**
+	 * @param string $apiKey
+	 * @return OTPHandler
+	 */
+	public function setApiKey(string $apiKey): OTPHandler
+	{
+		$this->apiKey = $apiKey;
+		return $this;
+	}
+
+	/**
+	 * @param string $endpoint
+	 * @return OTPHandler
+	 */
+	public function setEndpoint(string $endpoint): OTPHandler
+	{
+		$this->endpoint = $endpoint;
+		return $this;
+	}
+
+	/**
+	 * @return OTPHandler
+	 * @throws Exception
+	 */
+	public function setParams(): OTPHandler
+	{
+		$requiredFields = [];
+		$optionalFields = [];
+
+		switch ($this->endpoint) {
+			case self::ENDPOINT_SEND:
+				$requiredFields = [
+					'mobile' => $this->mobile,
+					'method' => $this->method,
+					'templateID' => $this->templateID ?? 3,
+				];
+				$optionalFields = [
+					'countryCode' => $this->countryCode ?? '',
+					'length' => $this->length ?? '',
+					'code' => $this->code ?? '',
+					'param1' => $this->param1 ?? '',
+					'param2' => $this->param2 ?? '',
+					'param3' => $this->param3 ?? '',
+					'param4' => $this->param4 ?? '',
+					'param5' => $this->param5 ?? '',
+					'expireTime' => $this->expireTime ?? '',
+				];
+				break;
+			case self::ENDPOINT_STATUS:
+				$requiredFields = [
+					'OTPReferenceID' => $this->OTPReferenceID,
+				];
+				break;
+			case self::ENDPOINT_VERIFY:
+				$requiredFields = [
+					'mobile' => $this->mobile,
+					'OTP' => $this->OTP,
+				];
+				$optionalFields = [
+					'countryCode' => $this->countryCode ?? '',
+				];
+				break;
+			default:
+				break;
 		}
-		$this->setError();
+
+		foreach ($optionalFields as $field => $value) {
+			if (!empty($value)) {
+				$requiredFields[$field] = $value;
+			}
+		}
+		$this->params = json_encode($requiredFields);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			throw new Exception('error on json_encode params');
+		}
+		var_dump($this->getParams());
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getParams(): string
+	{
+		return $this->params;
+	}
+
+	/**
+	 * @param string $acceptLanguage
+	 * @return OTPHandler
+	 */
+	public function setAcceptLanguage(string $acceptLanguage): OTPHandler
+	{
+		if (in_array($acceptLanguage, ["fa", "en"])) {
+			$acceptLanguage = self::ACCEPT_LANGUAGE;
+		}
+		$this->acceptLanguage = $acceptLanguage;
+		return $this;
+	}
+
+	/**
+	 * @param string $response
+	 * @return OTPHandler
+	 * @throws Exception
+	 */
+	public function setResponse(string $response): OTPHandler
+	{
+		$this->response = json_decode($response);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			throw new Exception('incorrect response: ' . $response);
+		}
+		return $this;
+	}
+
+	/**
+	 * @param $message
+	 * @param $code
+	 * @return $this
+	 */
+	public function setError($message, $code): OTPHandler
+	{
+		$this->error = new Exception($message, $code);
+		return $this;
+	}
+
+	/**
+	 * @param $curl
+	 * @return $this
+	 */
+	private function setHttpCode($curl): OTPHandler
+	{
+		$this->httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		return $this;
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	protected function sendRequest(): OTPHandler
+	{
 		$curl = curl_init();
 		curl_setopt_array($curl, [
-			CURLOPT_URL => self::BASEURL . $endpoint,
+			CURLOPT_URL => self::BASEURL . $this->endpoint,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 			CURLOPT_CUSTOMREQUEST => 'POST',
-			CURLOPT_POSTFIELDS => $params,
+			CURLOPT_POSTFIELDS => $this->params,
 			CURLOPT_HTTPHEADER => [
 				"Content-Type: application/json",
-				"accept-language: {$this->acceptLanguage}",
-				"apiKey: {$this->apiKey}",
+				"accept-language: $this->acceptLanguage",
+				"apiKey: $this->apiKey",
 			],
 		]);
 		$response = curl_exec($curl);
 		if ($response === false) {
-			throw new \Exception('Curl error: ' . curl_error($curl));
+			$this->setError('curl error: ' . curl_error($curl), 1);
+			throw $this->error;
 		}
-		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		$this->setHttpCode($curl)->setResponse($response);
 		curl_close($curl);
-
-		$result = json_decode($response, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			throw new \Exception('incorrect response: ' . $response);
+		if ($this->httpCode != 200 || $this->response->status == 'error') {
+			$message = $this->response->error->message ?? "an error was encountered";
+			$code = $this->response->error->code ?? 0;
+			$this->setError($message, $code);
+			throw $this->error;
 		}
-		if ($httpCode != 200 || $result['status'] == 'error') {
-			$errMsg = $result['error']['message'] ?? "an error was encountered";
-			$errCode = $result['error']['code'] ?? 0;
-			throw new \Exception($errMsg, $errCode);
-		}
-		return $result;
+		return $this;
 	}
 }
