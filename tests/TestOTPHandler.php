@@ -7,87 +7,95 @@ use PHPUnit\Framework\TestCase;
 class TestOTPHandler extends TestCase
 {
 
-    private static $OTPHandler;
-    private static $apiKey;
-    private static $mobile;
-    //private static $email;
-    private static $referenceID;
+	private static OTPHandler $OTPHandler;
+	private static string $apiKey;
+	private static string $mobile;
 
-    public static function setUpBeforeClass(): void
-    {
-        self::$apiKey = getenv("API_KEY");
-        self::$mobile = getenv("MOBILE");
-        //self::$email = getenv("EMAIL");
-        self::$referenceID = getenv("REFERENCE_ID");
-        self::$OTPHandler = new OTPHandler(self::$apiKey);
-    }
+	public static function setUpBeforeClass(): void
+	{
+		self::$apiKey = getenv("API_KEY");
+		self::$mobile = getenv("MOBILE");
+		self::$OTPHandler = new OTPHandler(self::$apiKey);
+	}
 
-    public function testSendSMSOtpSuccess()
-    {
-        $this->assertGreaterThan(0,  self::$OTPHandler->sendSMS(self::$mobile));
-    }
+	/**
+	 * @throws Exception
+	 */
+	public function testSendBySMS(): string
+	{
+		$referenceID = self::$OTPHandler->sendSMS(self::$mobile);
+		$this->assertIsString($referenceID);
+		return $referenceID;
+	}
 
-    public function testSendSMSOtpFailed()
-    {
-        $this->assertEquals(0, self::$OTPHandler->sendSMS("132"));
-        $this->assertGreaterThan(0, self::$OTPHandler->getErrorCode());
-    }
+	/**
+	 * @throws Exception
+	 */
+	public function testSendByMessenger()
+	{
+		$this->assertIsString(self::$OTPHandler->setMobile(self::$mobile)->sendMessenger());
+	}
 
-    public function testSendIVROtpSuccess()
-    {
-        $this->assertGreaterThan(0,  self::$OTPHandler->sendIVR(self::$mobile));
-    }
+	/**
+	 * @throws Exception
+	 */
+	public function testSendByIvr()
+	{
+		$this->assertIsString(self::$OTPHandler->sendIvr(self::$mobile));
+	}
 
-    public function testSendIVROtpFailed()
-    {
-        $this->assertEquals(0, self::$OTPHandler->sendIVR("456"));
-        $this->assertGreaterThan(0, self::$OTPHandler->getErrorCode());
-    }
+	/**
+	 * @throws Exception
+	 */
+	public function testSendBySmart()
+	{
+		$this->assertIsString(self::$OTPHandler->sendSmart(self::$mobile, 3));
+	}
 
-    // TODO: To be completed later
-    /*
-    public function testSendEmailOtpSuccess()
-    {
-        $this->assertGreaterThan(0,  self::$OTPHandler->sendEmail(self::$email));
-    }
+	/**
+	 * @depends testSendBySMS
+	 * @throws Exception
+	 */
+	public function testCheckStatus(string $referenceID)
+	{
+		self::$OTPHandler->status($referenceID);
+		$this->assertContains(self::$OTPHandler->getOTPStatus(), ['pending', 'sent']);
+		$this->assertEquals(false, self::$OTPHandler->isOTPVerified());
+		$this->assertContains(self::$OTPHandler->getOTPMethod(), ['sms', 'ivr', 'email', 'messenger']);
+	}
 
-    public function testSendEmailOtpFailed()
-    {
-        $this->assertEquals(0, self::$OTPHandler->sendEmail("www.yoyo"));
-        $this->assertGreaterThan(0, self::$OTPHandler->getErrorCode());
-    }
+	/**
+	 * @throws Exception
+	 */
+	public function testVerify()
+	{
+		try {
+			self::$OTPHandler->setMobile("+989356" . rand(100000, 999999))->setOTP(rand(1000, 9999))->verify();
+			$this->fail('verify OTP was not thrown');
+		} catch (Exception $e) {
+			$this->assertGreaterThan(0, $e->getCode());
+		}
+	}
 
-    public function testSendGapOtpSuccess()
-    {
-        $this->assertGreaterThan(0,  self::$OTPHandler->sendGap(self::$mobile));
-    }
+	/**
+	 * @throws Exception
+	 */
+	public function testSendByMessengerWithParams(): string
+	{
+		$otpCode = rand(1000, 9999);
+		$referenceID = self::$OTPHandler->setMobile(substr(self::$mobile, 3))
+			->setCountryCode("98")
+			->setTemplateID(11)
+			->setParam1("value_1")
+			->setParam2("value_2")
+			->setParam3("value_3")
+			->setParam4("value_4")
+			->setParam5("value_5")
+			->setCode($otpCode)
+			->setLength(strlen($otpCode))
+			->sendMessenger();
+		$this->assertIsString($referenceID);
+		return $otpCode;
+	}
 
-    public function testSendGapOtpFailed()
-    {
-        $this->assertEquals(0, self::$OTPHandler->sendGap("789"));
-        $this->assertGreaterThan(0, self::$OTPHandler->getErrorCode());
-    }
-    */
-
-    public function testCheckStatusOtpSuccess()
-    {
-        $checkStatus = self::$OTPHandler->status(self::$referenceID);
-        $this->assertIsArray($checkStatus);
-        $this->assertArrayHasKey('status', $checkStatus);
-        $this->assertArrayHasKey('method', $checkStatus);
-        $this->assertArrayHasKey('verified', $checkStatus);
-        $this->assertContains($checkStatus['status'], ['pending', 'sent', 'deliver', 'failed']);
-        $this->assertContains($checkStatus['method'], ['sms', 'ivr', 'email', 'gap']);
-    }
-
-    public function testCheckStatusOtpFail()
-    {
-        $checkStatus = self::$OTPHandler->status("134486546");
-        $this->assertIsArray($checkStatus);
-        $this->assertEquals([], $checkStatus);
-        $this->assertGreaterThan(0, self::$OTPHandler->getErrorCode());
-    }
-
-    //TODO: write test for verify otp
-    // public function testVerifyOtp(){}
 }
