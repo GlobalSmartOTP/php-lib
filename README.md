@@ -83,9 +83,9 @@ try {
 ```php
 try {
 	$gsOTP = OTPHandler::checkStatus($apiKey, $referenceID);
-	echo "OTPStatus: " . $gsOTP->OTPStatus . PHP_EOL;
-	echo "OTPVerified:" . $gsOTP->OTPVerified . PHP_EOL;
-	echo "OTPMethod: " . $gsOTP->OTPMethod . PHP_EOL;
+	echo "OTPStatus: " . $gsOTP->getOTPStatus() . PHP_EOL;
+	echo "OTPVerified: " . $gsOTP->isOTPVerified() . PHP_EOL;
+	echo "OTPMethod: " . $gsOTP->getOTPMethod() . PHP_EOL;
 } catch (\Exception $e) {
 	echo "Error:" . $e->getMessage();
 }
