@@ -547,7 +547,6 @@ class OTPHandler
 		if (json_last_error() !== JSON_ERROR_NONE) {
 			throw new Exception('error on json_encode params');
 		}
-		var_dump($this->getParams());
 		return $this;
 	}
 
