@@ -4,10 +4,17 @@ namespace GlobalSmartOTP\Api;
 
 use Exception;
 
+/**
+ * @method string BySms(string $apiKey, string $mobile, int $templateID = 0, mixed $provider = null)
+ * @method string ByIVR(string $apiKey, string $mobile, int $templateID = 2, mixed $provider = null)
+ * @method string ByMessenger(string $apiKey, string $mobile, int $templateID = 0, mixed $provider = null)
+ * @method string checkStatus(string $apiKey, string $referenceID)
+ * @method string isVerify(string $apiKey, string $mobile, string $OTP)
+ */
 class OTPHandler
 {
 
-	const VERSION = '2.0.0';
+	const VERSION = '2.1.0';
 	const BASEURL = 'https://api.gsotp.com';
 	const ACCEPT_LANGUAGE = 'fa';
 	const ENDPOINT_SEND = "/otp/send";
@@ -95,6 +102,10 @@ class OTPHandler
 	 * @var int
 	 */
 	public int $expireTime;
+	/**
+	 * @var int
+	 */
+	public int $provider;
 
 	/**
 	 * @var string
@@ -150,7 +161,8 @@ class OTPHandler
 			{
 				$callMethod = "send" . ucfirst(substr($callMethod, 2));
 				$instance->setMobile($arguments[1] ?? '')
-					->setTemplateID($arguments[2] ?? 3);
+					->setTemplateID($arguments[2] ?? 3)
+					->setProvider($arguments[3] ?? '');
 				break;
 			}
 			case $callMethod == strtolower("checkStatus"):
@@ -177,10 +189,11 @@ class OTPHandler
 	/**
 	 * @param string $mobile
 	 * @param int $templateID
+	 * @param mixed $provider
 	 * @return string
 	 * @throws Exception
 	 */
-	public function sendSms(string $mobile = '', int $templateID = 0): string
+	public function sendSms(string $mobile = '', int $templateID = 0, $provider = null): string
 	{
 		if (!empty($mobile)) {
 			$this->setMobile($mobile);
@@ -188,16 +201,17 @@ class OTPHandler
 		if (!empty($templateID)) {
 			$this->setTemplateID($templateID);
 		}
-		return $this->setMethod('sms')->send();
+		return $this->setMethod('sms')->setProvider($provider)->send();
 	}
 
 	/**
 	 * @param string $mobile
 	 * @param int $templateID
+	 * @param mixed $provider
 	 * @return string
 	 * @throws Exception
 	 */
-	public function sendMessenger(string $mobile = '', int $templateID = 0): string
+	public function sendMessenger(string $mobile = '', int $templateID = 0, $provider = null): string
 	{
 		if (!empty($mobile)) {
 			$this->setMobile($mobile);
@@ -205,16 +219,17 @@ class OTPHandler
 		if (!empty($templateID)) {
 			$this->setTemplateID($templateID);
 		}
-		return $this->setMethod('messenger')->send();
+		return $this->setMethod('messenger')->setProvider($provider)->send();
 	}
 
 	/**
 	 * @param string $mobile
 	 * @param int $templateID
+	 * @param mixed $provider
 	 * @return string
 	 * @throws Exception
 	 */
-	public function sendIvr(string $mobile = '', int $templateID = 2): string
+	public function sendIvr(string $mobile = '', int $templateID = 2, $provider = null): string
 	{
 		if (!empty($mobile)) {
 			$this->setMobile($mobile);
@@ -222,7 +237,7 @@ class OTPHandler
 		if (!empty($templateID)) {
 			$this->setTemplateID($templateID);
 		}
-		return $this->setMethod('ivr')->send();
+		return $this->setMethod('ivr')->setProvider($provider)->send();
 	}
 
 	/**
@@ -363,6 +378,52 @@ class OTPHandler
 	}
 
 	/**
+	 * Providers
+	 */
+	const PROVIDER_MESSENGER_GAP = 'gap';
+	const PROVIDER_MESSENGER_WHATSAPP = 'whatsapp';
+	const PROVIDER_SMS_3000 = '3000';
+	const PROVIDER_SMS_2000 = '2000';
+	const PROVIDER_SMS_9000 = '9000';
+	const PROVIDER_IVR = 'ivr';
+
+	/**
+	 * @param mixed $provider
+	 * @return OTPHandler
+	 */
+	public function setProvider($provider): OTPHandler
+	{
+		if (empty($provider)) {
+			return $this;
+		}
+		if (is_numeric($provider) && !in_array($provider, [
+				self::PROVIDER_SMS_3000,
+				self::PROVIDER_SMS_2000,
+				self::PROVIDER_SMS_9000
+			])) {
+			$this->provider = $provider;
+			return $this;
+		}
+		switch (strtolower($provider)) {
+			case self::PROVIDER_MESSENGER_GAP:
+			case self::PROVIDER_SMS_2000:
+				$provider = 2;
+				break;
+			case self::PROVIDER_SMS_9000:
+				$provider = 3;
+				break;
+			case self::PROVIDER_SMS_3000:
+			case self::PROVIDER_MESSENGER_WHATSAPP:
+			case self::PROVIDER_IVR:
+			default:
+				$provider = 1;
+				break;
+		}
+		$this->provider = $provider;
+		return $this;
+	}
+
+	/**
 	 * @param string $method
 	 * @return OTPHandler
 	 */
@@ -498,7 +559,6 @@ class OTPHandler
 	 */
 	public function setParams(): OTPHandler
 	{
-		$requiredFields = [];
 		$optionalFields = [];
 
 		switch ($this->endpoint) {
@@ -518,6 +578,7 @@ class OTPHandler
 					'param4' => $this->param4 ?? '',
 					'param5' => $this->param5 ?? '',
 					'expireTime' => $this->expireTime ?? '',
+					'provider' => $this->provider ?? '',
 				];
 				break;
 			case self::ENDPOINT_STATUS:
@@ -535,7 +596,7 @@ class OTPHandler
 				];
 				break;
 			default:
-				break;
+				throw new Exception("not found endpoint: `$this->endpoint`");
 		}
 
 		foreach ($optionalFields as $field => $value) {
