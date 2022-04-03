@@ -4,21 +4,27 @@
 
 A PHP SDK for the GlobalSmartOTP API.
 
+## Available Methods
+- SMS (Iran: 2000, 3000, 9000)
+- Messenger
+  - [Whatsapp](https://whatsapp.com) Messenger
+  - [Gap](https://gap.im) Messenger
+- IVR
+
 ## Requirements
 
 - PHP 7.4 or higher
 - ext-curl
 - ext-json
+- composer
 
 ## Installation
 
-```sh
-$ git clone git@github.com:GlobalSmartOTP/php-lib.git
-$ cd php-lib/
-$ composer dumpautoload
+### with Composer
+```shell
+$ composer require globalsmartotp/php-lib
 ```
-
-### Require
+#### Require
 ```php
 require dirname(__FILE__) . '/../vendor/autoload.php';
 use GlobalSmartOTP\Api\OTPHandler;
@@ -28,6 +34,22 @@ $apiKey = "";
 $mobile = "";
 $templateID = 3;
 ```
+
+### without Composer
+```sh
+$ git clone git@github.com:GlobalSmartOTP/php-lib.git
+```
+#### Require
+```php
+require dirname(__FILE__) . '/php-lib/src/OTPHandler.php';
+use GlobalSmartOTP\Api\OTPHandler;
+
+// Get apiKey from https://gsotp.com/dashboard/document/
+$apiKey = "";
+$mobile = "";
+$templateID = 3;
+```
+----
 
 ## Send OTP 
 
@@ -42,8 +64,9 @@ try {
 ```
 ### By  Messenger
 ```php
+$provider = 'whatsapp'; // whatsapp, gap
 try {
-	$referenceID = OTPHandler::ByMessenger($apiKey, $mobile, $templateID);
+	$referenceID = OTPHandler::ByMessenger($apiKey, $mobile, $templateID, 'whatsapp');
 	echo "ReferenceID: {$referenceID}";
 } catch (\Exception $e) {
 	echo $e->getMessage();
@@ -54,15 +77,6 @@ try {
 $templateID = 2;
 try {
 	$referenceID = OTPHandler::ByIvr($apiKey, $mobile, $templateID);
-	echo "ReferenceID: {$referenceID}";
-} catch (\Exception $e) {
-	echo $e->getMessage();
-}
-```
-### By  Smart
-```php
-try {
-	$referenceID = OTPHandler::BySmart($apiKey, $mobile, $templateID);
 	echo "ReferenceID: {$referenceID}";
 } catch (\Exception $e) {
 	echo $e->getMessage();
