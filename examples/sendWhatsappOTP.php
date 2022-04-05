@@ -16,7 +16,7 @@ try {
 /*
 $gsOtp = new OTPHandler(API_KEY);
 try {
-	$gsOTP = $gsOtp->setProvider('whatsapp')->sendSMS(MOBILE, TEMPLATE_ID);
+	$gsOTP = $gsOtp->setProvider('whatsapp')->sendMessenger(MOBILE, TEMPLATE_ID);
 	echo "ReferenceID: " . $gsOTP;
 } catch (Exception $e) {
 	echo "Error: " . $e->getMessage();

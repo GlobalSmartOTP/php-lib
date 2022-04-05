@@ -4,7 +4,7 @@ require_once dirname(__FILE__) . '/configs.php';
 
 use GlobalSmartOTP\Api\OTPHandler;
 
-/* Send OTP by Whatsapp Messenger, Call static */
+/* Send OTP by Gap Messenger, Call static */
 try {
 	$gsOTP = OTPHandler::ByMessenger(API_KEY, MOBILE, TEMPLATE_ID, 'gap');
 	echo "ReferenceID: {$gsOTP}";
@@ -12,18 +12,18 @@ try {
 	echo $e->getMessage();
 }
 
-/* Send OTP by Whatsapp Messenger */
+/* Send OTP by Gap Messenger */
 /*
 $gsOtp = new OTPHandler(API_KEY);
 try {
-	$gsOTP = $gsOtp->setProvider('gap')->sendSMS(MOBILE, TEMPLATE_ID);
+	$gsOTP = $gsOtp->setProvider('gap')->sendMessenger(MOBILE, TEMPLATE_ID);
 	echo "ReferenceID: " . $gsOTP;
 } catch (Exception $e) {
 	echo "Error: " . $e->getMessage();
 }
 */
 
-/* Send OTP by SMS with params */
+/* Send OTP by Gap Messenger with params */
 /*
 $gsOtp = new OTPHandler(API_KEY);
 try {
