@@ -1,3 +1,5 @@
+<div dir=rtl>
+
 ![gsOTP](examples/assets/logo.png)
 
 
@@ -5,32 +7,42 @@
 [![Total Downloads][ico-downloads]][link-downloads]
 ![Swagger][ico-swagger]
 [![Global Smart OTP][ico-gsOTP]][link-gsOTP]
-![🇮🇷](https://github.com/GlobalSmartOTP/php-lib/blob/main/README-fa.md)
+![🇬🇧](https://github.com/GlobalSmartOTP/php-lib/blob/main/README.md)
 
-# GlobalSmartOTP PHP SDK
-A PHP SDK for the GlobalSmartOTP API.
+# سرویس gsOTP
+این کتابخانه برای کار با سامانه GlobalSmartOTP آماده شده است.
 
-## Available Methods
-- SMS (Iran: 2000, 3000, 9000)
-- Messenger
-  - [Whatsapp](https://whatsapp.com) Messenger
-  - [Gap](https://gap.im) Messenger
-- IVR
+برای مشاهده نمونه کدها می‌توانید فایل‌های داخل پوشه [examples](https://github.com/GlobalSmartOTP/php-lib/tree/main/examples) را بررسی کنید.
 
-## Requirements
+## روش‌های ارسال
+- پیامک (از سرشماره‌های: 2000, 3000, 9000)
+- پیام‌رسان‌ها:
+  - پیام‌رسان [واتساپ](https://whatsapp.com)
+  - پیام‌رسان [گپ](https://gap.im)
+- تماس صوتی
 
-- PHP 7.4 or higher
+## نیازمندی‌ها
+
+- PHP 7.4 یا بالاتر
 - ext-curl
 - ext-json
 - composer
 
-## Installation
+## نصب
 
-### with Composer
+### با استفاده از Composer
+ابتدا دستور ذیل را از طرق ترمینال اجرا کنید.
+<div dir=ltr>
+
 ```shell
 $ composer require globalsmartotp/php-lib
 ```
-#### Require
+
+</div>
+
+سپس کدهای ذیل را در ابتدای فایل موردنظر درج کنید، مقدار apiKey را باید پس از ثبت نام از طریق منو پروژه‌ها در سایت gsOTP بدست آورید. 
+<div dir=ltr>
+
 ```php
 require dirname(__FILE__) . '/../vendor/autoload.php';
 use GlobalSmartOTP\Api\OTPHandler;
@@ -41,11 +53,24 @@ $mobile = "";
 $templateID = 3;
 ```
 
-### without Composer
+</div>
+
+### بدون استفاده از Composer
+ابتدا پروژه را از طریق اجرای دستور ذیل در ترمینال دریافت کنید.
+
+<div dir=ltr>
+
 ```sh
 $ git clone git@github.com:GlobalSmartOTP/php-lib.git
 ```
-#### Require
+</div>
+
+همچنین دانلود پروژه با کلیک روی [این دکمه](https://github.com/GlobalSmartOTP/php-lib/archive/refs/heads/main.zip)  امکان پذیر است.
+
+سپس کدهای ذیل را در ابتدای فایل موردنظر درج کنید، مقدار apiKey را باید پس از ثبت نام از طریق منو پروژه‌ها در سایت gsOTP بدست آورید.
+
+<div dir=ltr>
+
 ```php
 require dirname(__FILE__) . '/php-lib/src/OTPHandler.php';
 use GlobalSmartOTP\Api\OTPHandler;
@@ -55,11 +80,16 @@ $apiKey = "";
 $mobile = "";
 $templateID = 3;
 ```
+</div>
+
 ----
 
-## Send OTP 
+## ارسال  OTP 
 
-### By SMS
+### از طریق پیامک
+
+<div dir=ltr>
+
 ```php
 try {
 	$referenceID = OTPHandler::BySms($apiKey, $mobile, $templateID);
@@ -68,7 +98,12 @@ try {
 	echo $e->getMessage();
 }
 ```
-### By  Messenger
+</div>
+
+### از طریق پیام‌رسان 
+
+<div dir=ltr>
+
 ```php
 $provider = 'whatsapp'; // whatsapp, gap
 try {
@@ -78,7 +113,13 @@ try {
 	echo $e->getMessage();
 }
 ```
-### By  IVR
+</div>
+
+
+### از طریق تماس صوتی
+
+<div dir=ltr>
+
 ```php
 $templateID = 2;
 try {
@@ -88,8 +129,15 @@ try {
 	echo $e->getMessage();
 }
 ```
+
+</div>
+
+
 ---
-## Verify
+## تایید کد OTP 
+
+<div dir=ltr>
+
 ```php
 try {
 	OTPHandler::isVerify($apiKey, $mobile, $otp);
@@ -98,8 +146,13 @@ try {
 	echo $e->getMessage();
 }
 ```
+</div>
+
 ---
-## Status
+## بررسی وضعیت
+
+<div dir=ltr>
+
 ```php
 try {
 	$gsOTP = OTPHandler::checkStatus($apiKey, $referenceID);
@@ -110,9 +163,10 @@ try {
 	echo "Error:" . $e->getMessage();
 }
 ```
-## License
 
-MIT
+</div>
+
+</div>
 
 [ico-version]: https://img.shields.io/packagist/v/globalsmartotp/php-lib.svg?style=for-the-badge
 [ico-downloads]: https://img.shields.io/packagist/dt/globalsmartotp/php-lib.svg?style=for-the-badge
