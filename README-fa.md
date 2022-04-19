@@ -1,7 +1,7 @@
 <div dir=rtl>
 
 	
-# پروژه آرشیو شده! لطفا از   [راه پیام](https://github.com/MessageWay/php-lib) استفاده کنید.	
+# پروژه آرشیو شده! لطفا از   [راه پیام](https://github.com/MessageWay/MessageWayPHP) استفاده کنید.	
 ![DEPRECATED][ico-deprecated]
 
 [ico-deprecated]: https://img.shields.io/badge/-DEPRECATED-red?style=for-the-badge
