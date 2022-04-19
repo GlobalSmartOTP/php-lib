@@ -1,4 +1,4 @@
-# DEPRECATED! Please check [MessageWay](https://github.com/MessageWay/php-lib)
+# DEPRECATED! Please check [MessageWay](https://github.com/MessageWay/MessageWayPHP)
 
 ![DEPRECATED][ico-deprecated]
 
